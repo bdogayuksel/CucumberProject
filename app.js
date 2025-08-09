@@ -1,4 +1,4 @@
-// import { removeBackground, replaceBackground } from "./lib/fal.js";
+import { generateICLightViaServer } from "./lib/fal.js";
 
 const fileInput = document.getElementById("file-input");
 const chooseFileButton = document.getElementById("choose-file");
@@ -16,6 +16,20 @@ const placeholder = document.getElementById("placeholder");
 
 let uploadedImageUrl = null;
 let uploadedImageBlob = null;
+let serverUsable = false;
+
+async function probeServer() {
+  try {
+    const base = typeof window !== 'undefined' && window.ICLIGHT_API_BASE ? window.ICLIGHT_API_BASE : '';
+    if (!base) return false;
+    const r = await fetch(`${base}/health`, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) return false;
+    const j = await r.json();
+    return Boolean(j && j.ok);
+  } catch {
+    return false;
+  }
+}
 
 function updateGenerateEnabled() {
   const hasImage = Boolean(uploadedImageUrl);
@@ -33,7 +47,6 @@ function showLoader(isVisible) {
 }
 
 function resetAll() {
-  // revoke old object url if any
   if (uploadedImageUrl) {
     URL.revokeObjectURL(uploadedImageUrl);
   }
@@ -100,21 +113,18 @@ async function simulateResultImage(imageBlob, promptText) {
   canvas.height = outH;
   const ctx = canvas.getContext("2d");
 
-  // background gradient as placeholder for a generated background
   const grad = ctx.createLinearGradient(0, 0, outW, outH);
   grad.addColorStop(0, "#1b1f2e");
   grad.addColorStop(1, "#0f1117");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, outW, outH);
 
-  // subtle vignette
   const vignette = ctx.createRadialGradient(outW / 2, outH / 2, Math.min(outW, outH) / 6, outW / 2, outH / 2, Math.max(outW, outH) / 1.1);
   vignette.addColorStop(0, "rgba(255,255,255,0.0)");
   vignette.addColorStop(1, "rgba(0,0,0,0.35)");
   ctx.fillStyle = vignette;
   ctx.fillRect(0, 0, outW, outH);
 
-  // drop shadow for the product
   ctx.save();
   ctx.shadowColor = "rgba(0,0,0,0.35)";
   ctx.shadowBlur = Math.round(Math.min(outW, outH) * 0.04);
@@ -127,7 +137,6 @@ async function simulateResultImage(imageBlob, promptText) {
   ctx.drawImage(bitmap, dx, dy, drawW, drawH);
   ctx.restore();
 
-  // overlay prompt as caption (debug/placeholder)
   const caption = promptText.slice(0, 120);
   ctx.font = `${Math.max(12, Math.round(outW * 0.02))}px ui-sans-serif, system-ui, Arial`;
   ctx.fillStyle = "rgba(255,255,255,0.9)";
@@ -143,16 +152,24 @@ async function onGenerate() {
   setResultPlaceholderVisible(false);
   showLoader(true);
 
-  // Simulate latency
-  await new Promise((r) => setTimeout(r, 900));
+  await new Promise((r) => setTimeout(r, 200));
 
-  // In future: call removeBackground + replaceBackground via FAL.AI
-  // const cutoutUrl = await removeBackground(uploadedImageUrl);
-  // const resultUrl = await replaceBackground(cutoutUrl, promptInput.value.trim());
+  try {
+    if (serverUsable) {
+      const { url } = await generateICLightViaServer({ imageFileOrUrl: uploadedImageBlob, prompt: promptInput.value.trim(), imageSize: 'square', outputFormat: 'png' });
+      resultImg.src = url;
+      resultImg.style.display = "block";
+      downloadLink.href = url;
+      downloadLink.setAttribute("aria-disabled", "false");
+      showLoader(false);
+      return;
+    }
+  } catch (err) {
+    console.warn('IC-Light server call failed; falling back to placeholder', err);
+  }
 
   const outBlob = await simulateResultImage(uploadedImageBlob, promptInput.value.trim());
   const outUrl = URL.createObjectURL(outBlob);
-
   resultImg.src = outUrl;
   resultImg.style.display = "block";
   downloadLink.href = outUrl;
@@ -170,5 +187,7 @@ generateButton.addEventListener("click", () => {
   });
 });
 
-// init
-resetAll();
+(async function init() {
+  resetAll();
+  serverUsable = await probeServer();
+})();

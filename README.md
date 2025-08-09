@@ -29,3 +29,38 @@ npx serve .
 ## Notlar
 - Şu an gerçek model çağrısı yapılmıyor.
 - Gerçekleştiğinde, `@fal-ai/client` ile `removeBackground` ve `replaceBackground` fonksiyonlarını bağlayacağız.
+
+## Sunucu (IC-Light proxy)
+
+Fal.ai anahtarınızı `.env` içine ekleyin:
+
+```
+cp .env.example .env
+# .env dosyasını açıp FAL_KEY değerini girin
+```
+
+Bağımlılıkları yükleyin ve sunucuyu başlatın:
+
+```bash
+npm install
+npm run dev
+# Sunucu: http://localhost:8787
+```
+
+İstemciden çağırma (örnek):
+
+```js
+import { generateICLightViaServer } from './lib/fal.js';
+
+// URL ile
+await generateICLightViaServer({
+  imageFileOrUrl: 'https://example.com/image.png',
+  prompt: 'light grey seamless studio background',
+  imageSize: 'square',
+  outputFormat: 'png',
+});
+
+// Dosya ile
+const file = new File([/* ... */], 'product.png', { type: 'image/png' });
+await generateICLightViaServer({ imageFileOrUrl: file, prompt: 'soft shadow studio' });
+```
