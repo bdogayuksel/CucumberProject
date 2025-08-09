@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI Ürün Görseli — MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="container header-inner">
+        <h1>AI Ürün Görseli — MVP</h1>
+        <p class="subtitle">Resim + Prompt ver, şu an için sahte önizleme gör. Entegrasyon sonra.</p>
+      </div>
+    </header>
+
+    <main class="container main-grid">
+      <section class="panel">
+        <h2>1) Görsel Yükle</h2>
+        <div id="dropzone" class="dropzone" aria-label="Sürükle ve bırak alanı">
+          <input id="file-input" type="file" accept="image/*" hidden />
+          <div class="dz-content">
+            <div class="dz-icon">📷</div>
+            <p>Görseli buraya sürükle ya da</p>
+            <button id="choose-file" class="btn secondary" type="button">Dosya Seç</button>
+          </div>
+        </div>
+        <div class="preview-block">
+          <h3>Girdi Önizleme</h3>
+          <img id="input-preview" alt="Yüklenen görsel önizleme" />
+        </div>
+      </section>
+
+      <section class="panel">
+        <h2>2) Prompt Yaz</h2>
+        <label class="field">
+          <span>Arka plan betimi</span>
+          <input id="prompt-input" type="text" placeholder="Örn: light grey seamless studio background, soft shadows" />
+        </label>
+        <div class="action-row">
+          <button id="generate-btn" class="btn primary" type="button" disabled>Oluştur</button>
+          <button id="reset-btn" class="btn" type="button">Sıfırla</button>
+        </div>
+        <p class="hint">Not: Şimdilik sahte sonuç üretir. FAL.AI entegrasyonu daha sonra eklenecek.</p>
+      </section>
+
+      <section class="panel">
+        <h2>3) Çıktı</h2>
+        <div id="result-card" class="result-card">
+          <div id="loader" class="loader hidden">İşleniyor…</div>
+          <img id="result-img" alt="Sonuç görseli" />
+          <div id="placeholder" class="placeholder">Çıktı burada görünecek</div>
+        </div>
+        <div class="action-row">
+          <a id="download-link" class="btn" download="sonuc.png" href="#" aria-disabled="true">İndir</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="app-footer">
+      <div class="container">
+        <small>v0 — Sadece arayüz. Entegrasyon bekliyor.</small>
+      </div>
+    </footer>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>
